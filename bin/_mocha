@@ -80,6 +80,7 @@ program
   .option('-t, --timeout <ms>', 'set test-case timeout in milliseconds [2000]')
   .option('-u, --ui <name>', 'specify user-interface (' + interfaceNames.join('|') + ')', 'bdd')
   .option('-w, --watch', 'watch files for changes')
+  .option('--watch-dirs <path>,...', 'directories to watch', list, [])
   .option('--check-leaks', 'check for global variable leaks')
   .option('--full-trace', 'display the full stack trace')
   .option('--compilers <ext>:<module>,...', 'use the given module(s) to compile files', list, [])
@@ -406,7 +407,19 @@ if (program.watch) {
     process.exit(130);
   });
 
-  var watchFiles = utils.files(cwd, [ 'js' ].concat(program.watchExtensions));
+  var watchFiles,
+      exts = [ 'js' ].concat(program.watchExtensions);
+  
+  if (program.watchDirs.length > 0) {
+    watchFiles = files;
+    program.watchDirs.map(function(dir) {
+      watchFiles = watchFiles.concat(utils.files(resolve(dir), exts));
+    });
+  }
+  else {
+    watchFiles = utils.files(cwd, exts);
+  }
+  
   var runAgain = false;
 
   loadAndRun = function loadAndRun () {
